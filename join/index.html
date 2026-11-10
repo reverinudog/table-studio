@@ -41,7 +41,9 @@
   .open { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 16px; text-decoration: none; }
   .open:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .help { border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .help[hidden], .open[hidden] { display: none; }
+  .help[hidden], .open[hidden], li[hidden] { display: none; }
+  form { margin: 0 0 6px; }
+  .dl { min-height: 40px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 600; cursor: pointer; }
   h2 { margin: 0; font-size: 15px; font-weight: 600; }
   ol { margin: 0; padding-left: 1.4em; color: var(--ink2); display: flex; flex-direction: column; gap: 6px; }
   ol a { color: var(--accent); }
@@ -64,27 +66,45 @@
   <section class="help" id="help" hidden>
     <h2>アプリが開かない時</h2>
     <ol>
-      <li><a id="download" href="https://github.com/reverinudog/table-studio/releases" rel="noopener">アプリ（無料）</a>を入れて、もう一度このページの「アプリで開く」を押してください。</li>
-      <li>または、下の招待をコピーして、アプリのホームの「参加」に貼ってください。</li>
+      <li id="get-beta" hidden>
+        <form id="dl" method="post"><input type="hidden" name="cred" id="cred"><button type="submit" class="dl">アプリ（無料・Windows）をダウンロード</button></form>
+        入れた後に、もう一度このページの「アプリで開く」を押してください。ダウンロードしたファイルを開いて「Windows によって PC が保護されました」と出たら、「詳細情報」→「実行」を押します。
+      </li>
+      <li id="get-none">アプリはベータ版で、まだ一般には配っていません。招待してくれた GM に、入れ方を聞いてください。</li>
+      <li>アプリを入れてある時は、下の招待をコピーして、アプリのホームの「参加」に貼ってください。</li>
     </ol>
     <div class="code"><code id="code"></code><button type="button" id="copy">コピー</button></div>
   </section>
-  <p class="note">このページは招待をアプリへ渡すだけで、どこにも送らず、何も保存しません。</p>
+  <p class="note">このページは招待をアプリへ渡すだけで、何も保存しません。ダウンロードを押した時だけ、配布元へ GM の招待の印を送ります（招待の中身は送りません）。</p>
 </main>
 <script>
   // アプリ用のリンクの名前（仮）。app/src/lib/net/code.ts の LINK_SCHEME と同じにする
   var SCHEME = 'tablestudio';
-  var invite = '';
-  try { invite = decodeURIComponent(location.hash.slice(1)); } catch (e) { invite = ''; }
+  // ベータ版の配布元（アプリのリポジトリの beta/）。鍵を持つ GM の招待には、後ろに「&b=招待の印」が付く
+  var BETA = 'https://beta.kawaken-official.com';
+  var invite = '', token = '';
+  try {
+    // 招待は encodeURIComponent してあるので、そのままの「&」は、後ろに付けた印の区切り
+    var parts = location.hash.slice(1).split('&');
+    invite = decodeURIComponent(parts[0]);
+    for (var i = 1; i < parts.length; i++) if (parts[i].indexOf('b=') === 0) token = decodeURIComponent(parts[i].slice(2));
+  } catch (e) { invite = ''; }
+  if (!/^tb1\.[a-z0-9-]{1,32}\.[A-Za-z0-9_-]{43}$/.test(token)) token = '';
   var open = document.getElementById('open');
   var help = document.getElementById('help');
   if (!invite) {
     document.getElementById('ok').innerHTML = '<h1>招待リンクが正しくありません</h1><p class="err">GMから届いたリンクを、もう一度そのまま開いてください。</p>';
     open.hidden = true;
   } else {
-    var appLink = SCHEME + '://join/?i=' + encodeURIComponent(invite);
+    var appLink = SCHEME + '://join/?i=' + encodeURIComponent(invite) + (token ? '&b=' + encodeURIComponent(token) : '');
     open.href = appLink;
     document.getElementById('code').textContent = invite;
+    if (token) {
+      document.getElementById('dl').action = BETA + '/v1/download';
+      document.getElementById('cred').value = token;
+      document.getElementById('get-beta').hidden = false;
+      document.getElementById('get-none').hidden = true;
+    }
     // アプリが開けば、このページは裏へ回る。しばらくしても前にあれば案内を出す
     var shown = false;
     var showHelp = function () { if (!shown && !document.hidden) { shown = true; help.hidden = false; } };
@@ -93,7 +113,8 @@
     setTimeout(showHelp, 1500);
     document.getElementById('copy').addEventListener('click', function (e) {
       var b = e.currentTarget;
-      navigator.clipboard.writeText(invite).then(function () { b.textContent = 'コピー済み'; }, function () { b.textContent = '選んでコピー'; });
+      // 印がある時は、招待リンクごとコピーする（アプリの「参加」に貼ると、印も預かる）
+      navigator.clipboard.writeText(token ? location.href : invite).then(function () { b.textContent = 'コピー済み'; }, function () { b.textContent = '選んでコピー'; });
     });
   }
 </script>
