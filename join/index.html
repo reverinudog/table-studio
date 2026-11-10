@@ -113,7 +113,8 @@
     setTimeout(showHelp, 1500);
     document.getElementById('copy').addEventListener('click', function (e) {
       var b = e.currentTarget;
-      navigator.clipboard.writeText(invite).then(function () { b.textContent = 'コピー済み'; }, function () { b.textContent = '選んでコピー'; });
+      // 印がある時は、招待リンクごとコピーする（アプリの「参加」に貼ると、印も預かる）
+      navigator.clipboard.writeText(token ? location.href : invite).then(function () { b.textContent = 'コピー済み'; }, function () { b.textContent = '選んでコピー'; });
     });
   }
 </script>
