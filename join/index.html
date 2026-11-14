@@ -1,7 +1,8 @@
 <!doctype html>
 <!--
-  招待リンクの案内ページ。URLの # の後ろ（サーバーへ送られない部分）にある招待を、アプリへ渡すだけ。
-  どこにもデータを送らず、何も保存しない（ダウンロードを押した時だけ、配布元へ GM の招待トークンを送る。招待の中身は送らない）。
+  招待リンクの案内ページ。URLの # の後ろ（サーバーへ送られない部分）にある招待を、アプリへ渡すだけ。何も保存しない。
+  外へ送るのは、アプリが入っていない時のダウンロードで、配布元へ GM の招待トークンを送る時だけ（招待の中身は送らない）。
+  その時、招待リンクをクリップボードにコピーする。インストールしたアプリは、初めて開いた時に、それを「参加」に入れる。
   アプリ用のリンクの名前（下の SCHEME）は、アプリの設定と同じにする（変える時は README を見る）。
   色はアプリの既定の色（アプリのリポジトリの app/src/lib/styles/app.css）に合わせる。
 -->
@@ -39,7 +40,7 @@
   @media (prefers-color-scheme: dark) { .logo.light { display: none; } .logo.dark { display: block; } }
   h1 { margin: 0; font-size: 19px; font-weight: 600; line-height: 1.4; text-align: center; }
   .err { margin: 0; color: var(--danger); text-align: center; }
-  /* 参加のボタン: 丸いアイコンだけ（名前は、ホバーした時と読み上げで出す） */
+  /* 参加のボタン: 丸いアイコンだけ（名前は、ホバーした時と読み上げで出す）。アプリが無ければ、押すとダウンロード */
   .open { align-self: center; width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); text-decoration: none; transition: transform .15s; }
   .open svg { width: 32px; height: 32px; stroke-width: 2.2; }
   .open:hover { transform: scale(1.06); }
@@ -58,32 +59,36 @@
   .row { display: flex; align-items: center; gap: 12px; }
   .ic { width: 36px; height: 36px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; flex: none; }
   .grow { flex: 1; min-width: 0; }
-  .card { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: background .15s, border-color .15s; }
-  .card:hover { background: var(--hover); border-color: var(--accent); }
   .grow b { display: block; font-weight: 600; }
   .grow small { display: block; font-size: 13px; color: var(--ink3); }
   form { margin: 0; }
-  .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-  .btn:hover { background: var(--hover); }
-  .btn svg { width: 16px; height: 16px; }
   /* ダウンロードの後: 3つの段（済んだ段は緑のチェック、今の段は青） */
   .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
   .steps li { display: flex; gap: 12px; align-items: flex-start; color: var(--ink3); }
   .steps .n { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: 13px; font-weight: 700; flex: none; }
   .steps .n svg { width: 14px; height: 14px; stroke-width: 3; }
   .steps .t { padding-top: 2px; }
-  .steps .t small { display: block; font-size: 13px; }
+  .steps .t small { display: block; font-size: 13px; font-weight: 400; color: var(--ink3); }
   .steps .done { color: var(--ink2); }
   .steps .done .n { border-color: var(--ok); background: var(--ok); color: #fff; animation: pop .3s ease-out; }
   .steps .now { color: var(--ink); font-weight: 600; }
   .steps .now .n { border-color: var(--accent); color: var(--accent); }
-  .steps .now small { font-weight: 400; color: var(--ink3); }
   @keyframes pop { from { transform: scale(.6); } }
-  .link { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 2px 6px; margin-left: -6px; border: 0; border-radius: 6px; background: none; color: var(--ink3); font: inherit; font-size: 13px; cursor: pointer; }
+  .link { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; border: 0; border-radius: 6px; background: none; color: var(--ink3); font: inherit; font-size: 13px; cursor: pointer; }
   .link svg { width: 14px; height: 14px; }
-  #fallback { flex-wrap: wrap; gap: 4px; }
-  #fallback .link { margin: 0; color: var(--accent); font-weight: 600; }
   .link:hover { background: var(--hover); color: var(--ink); }
+  .again { align-self: flex-start; margin-left: -6px; }
+  /* 「アプリが開かない時は」: 押すと、下にすっと出る */
+  .more { display: flex; flex-direction: column; align-items: center; margin-top: -8px; }
+  .more .link svg { transition: transform .25s; }
+  .more .link[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .drawer { width: 100%; display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .25s ease, opacity .25s ease; }
+  .drawer.shown { grid-template-rows: 1fr; opacity: 1; }
+  .drawer > div { min-height: 0; overflow: hidden; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; font-size: 13px; color: var(--ink3); }
+  .drawer > div > * { margin-top: 6px; }
+  .drawer #dl-more { flex-basis: 100%; justify-content: center; }
+  #dlerr { font-size: 13px; }
+  .drawer .copy { color: var(--accent); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -93,40 +98,48 @@
   <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-ask" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-go" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></symbol>
 </svg>
 <main>
   <!-- ロゴ（アプリのリポジトリの docs/design/logo/logo-horizontal*.svg のコピー） -->
   <img class="logo light" src="logo.svg" alt="テーブルトークテーブル"><img class="logo dark" src="logo-dark.svg" alt="テーブルトークテーブル">
-  <h1 id="title">卓に招待されています</h1>
-  <a class="open" id="open" href="#" aria-label="この卓に参加する" title="この卓に参加する"><svg><use href="#i-go"/></svg></a>
+  <h1 id="title">ルームに招待されています</h1>
+  <a class="open" id="open" href="#" aria-label="このルームに参加する" title="このルームに参加する"><svg><use href="#i-go"/></svg></a>
   <div class="status" id="status"><span class="spin"></span>アプリを開いています</div>
-  <!-- 丸いボタンを押してもアプリが開かなかった時だけ、ボタンのすぐ下に出す（アプリは入っているのに、ブラウザが開かない時） -->
-  <div class="status fade" id="fallback" hidden>アプリが開かない時は<button type="button" class="link" id="copy"><svg><use href="#i-copy"/></svg><span>招待リンクをコピー</span></button>→ アプリの「参加」に貼る</div>
 
-  <!-- ダウンロードを押した後 -->
+  <!-- 丸いボタンを押してもアプリが開かなかった時（アプリは入っているのに、ブラウザが開かない時） -->
+  <div class="more fade" id="more" hidden>
+    <button type="button" class="link" id="more-btn" aria-expanded="false" aria-controls="drawer">アプリが開かない時は<svg><use href="#i-down"/></svg></button>
+    <div class="drawer" id="drawer"><div>
+      <button type="button" class="link copy" id="copy"><svg><use href="#i-copy"/></svg><span>招待リンクをコピー</span></button><span>→ アプリの「参加」に貼る</span>
+      <!-- 入っていないのに「入っている」と見なした時に、ダウンロードへ戻れるように（ベータの間は、トークンのある招待だけ） -->
+      <button type="button" class="link copy" id="dl-more" hidden><svg><use href="#i-dl"/></svg><span>アプリをダウンロード</span></button>
+    </div></div>
+  </div>
+  <!-- 配布元が断った・つながらなかった時（このページのまま知らせる） -->
+  <p class="err fade" id="dlerr" hidden></p>
+
+  <!-- アプリが入っていない時: ダウンロードした後の手順 -->
   <section class="sec fade" id="after" hidden>
     <ol class="steps">
-      <li class="done"><span class="n"><svg><use href="#i-check"/></svg></span><span class="t">ダウンロード</span></li>
-      <li class="now"><span class="n">2</span><span class="t">インストール<small>「PC が保護されました」→「詳細情報」→「実行」</small></span></li>
-      <!-- 3つ目は、上の丸いボタンと同じ絵で見せる -->
-      <li><span class="n"><svg><use href="#i-go"/></svg></span><span class="t">参加</span></li>
+      <li class="done"><span class="n"><svg><use href="#i-check"/></svg></span><span class="t">ダウンロード<small id="copied" hidden>招待リンクもコピーしました</small></span></li>
+      <li class="now"><span class="n">2</span><span class="t">インストール<small>「PC が保護されました」と出たら「詳細情報」→「実行」</small></span></li>
+      <li><span class="n"><svg><use href="#i-go"/></svg></span><span class="t">参加<small id="auto" hidden>アプリを開いて「参加」を押すだけです</small></span></li>
     </ol>
-    <button type="button" class="link" id="again">もう一度ダウンロード</button>
+    <button type="button" class="link again" id="again">もう一度ダウンロード</button>
   </section>
 
-  <!-- アプリが開かない時 -->
-  <section class="sec fade" id="help" hidden>
-    <!-- 新しいタブで送る: 配布元が断った時も、このページ（招待）は残る。行全体が1つのボタン -->
-    <form id="dl" method="post" target="_blank" hidden><input type="hidden" name="cred" id="cred">
-      <button type="submit" class="row card"><span class="ic"><svg><use href="#i-dl"/></svg></span><span class="grow"><b>アプリをダウンロード</b><small>無料・Windows</small></span></button>
-    </form>
-    <div class="row" id="get-none">
+  <!-- アプリが入っていなくて、ダウンロードできない時（ベータの鍵の無い GM の招待） -->
+  <section class="sec fade" id="none" hidden>
+    <div class="row">
       <span class="ic"><svg><use href="#i-ask"/></svg></span>
       <span class="grow"><b>アプリはベータ版です</b><small>インストール方法は、招待してくれた GM に聞いてください</small></span>
     </div>
   </section>
 
+  <!-- 配布元へ送るフォーム（トークンだけを本文で送る。このページのタブのまま受け取る: ダウンロードなので、ページは移らない） -->
+  <form id="dl" method="post" hidden><input type="hidden" name="cred" id="cred"></form>
 </main>
 <script>
   // アプリ用のリンクの名前（仮）。app/src/lib/net/code.ts の LINK_SCHEME と同じにする
@@ -142,7 +155,7 @@
     for (var i = 1; i < parts.length; i++) if (parts[i].indexOf('b=') === 0) token = decodeURIComponent(parts[i].slice(2));
   } catch (e) { invite = ''; }
   if (!/^tb1\.[a-z0-9-]{1,32}\.[A-Za-z0-9_-]{43}$/.test(token)) token = '';
-  var open = $('open'), help = $('help'), after = $('after'), opening = $('status');
+  var open = $('open'), after = $('after'), opening = $('status');
   if (!invite) {
     $('title').textContent = '招待リンクが正しくありません';
     $('title').insertAdjacentHTML('afterend', '<p class="err">GM から届いたリンクを、もう一度そのまま開いてください</p>');
@@ -151,50 +164,99 @@
   } else {
     var appLink = SCHEME + '://join/?i=' + encodeURIComponent(invite) + (token ? '&b=' + encodeURIComponent(token) : '');
     open.href = appLink;
-    if (token) {
-      $('dl').action = BETA + '/v1/download';
-      $('cred').value = token;
-      $('dl').hidden = false;
-      $('get-none').hidden = true;
-    }
-    // アプリが開けば、このページは裏へ回る。しばらくしても前にあれば「開かない時」を出す
-    var waiting = function () { opening.hidden = false; };
-    var showHelp = function () { opening.hidden = true; if (!document.hidden && after.hidden) help.hidden = false; };
-    open.addEventListener('click', function () {
-      waiting();
-      // 押しても開かない時は、ボタンの下にコピーを出す（ダウンロードの前なら、ダウンロードも出す）
-      setTimeout(function () {
-        opening.hidden = true;
-        if (document.hidden) return;
-        $('fallback').hidden = false;
-        if (after.hidden) help.hidden = false;
-      }, 1500);
-    });
-    // ダウンロードを押した後は、インストールの手順を出す（このタブの間だけ覚える。招待の中身は覚えない。
+    if (token) { $('dl').action = BETA + '/v1/download'; $('cred').value = token; }
+
+    // ダウンロードした後は、手順を出す（このタブの間だけ覚える。覚えるのは「ダウンロードした」事だけで、招待は覚えない。
     // 招待は住所の # の後ろにあるので、読み直し・戻るでも残る）
     var DL_KEY = 'ttt-join:downloaded';
+    var downloaded = false;
+    try { downloaded = sessionStorage.getItem(DL_KEY) === '1'; } catch (e) { downloaded = false; }
     var showAfter = function () {
       after.hidden = false;
-      help.hidden = true;
       opening.hidden = true;
       open.classList.add('next');
     };
-    if (token) {
-      $('dl').addEventListener('submit', function () {
-        try { sessionStorage.setItem(DL_KEY, '1'); } catch (e) { /* 覚えられなくても、今は手順を出す */ }
-        showAfter();
-      });
-      $('again').addEventListener('click', function () { $('dl').requestSubmit(); });
-      var done = false;
-      try { done = sessionStorage.getItem(DL_KEY) === '1'; } catch (e) { done = false; }
-      if (done) showAfter();
-    }
+    // 招待リンクをクリップボードへ（押した操作の続きの時だけ書ける）。インストールしたアプリが、初めて開いた時に「参加」に入れる。
+    // ブラウザのウィンドウに注目が無い時などは、いつまでも返らない事がある（Chrome で確認）。2秒で、できなかった事にする
+    var copyInvite = function () {
+      var wrote;
+      try { wrote = navigator.clipboard.writeText(location.href).then(function () { return true; }, function () { return false; }); }
+      catch (e) { wrote = Promise.resolve(false); }
+      return Promise.race([wrote, new Promise(function (r) { setTimeout(function () { r(false); }, 2000); })]);
+    };
+    // ダウンロード: 先に配布元へ「取れるか」だけを聞き、取れる時だけ送る（断られた時に、このページを配布元の鍵の頁に置き換えない）。
+    // copied … 招待リンクをコピーできたか（手順に添える）
+    var dlErr = function (text) { var p = $('dlerr'); p.textContent = text; p.hidden = false; };
+    var download = function (copied) {
+      $('dlerr').hidden = true;
+      var stop = new AbortController();
+      var timer = setTimeout(function () { stop.abort(); }, 15000);
+      fetch(BETA + '/v1/download-check', { method: 'POST', body: new URLSearchParams({ cred: token }), signal: stop.signal })
+        .then(function (r) { return r.status; }, function () { return 0; })
+        .then(function (status) {
+          clearTimeout(timer);
+          if (status === 403) { dlErr('ダウンロードできませんでした。招待してくれた GM に聞いてください'); return; }
+          if (status !== 200) { dlErr(status === 503 ? 'ダウンロードの準備中です。少し待ってから、もう一度押してください' : '配布元につながりませんでした。少し待ってから、もう一度押してください'); return; }
+          try { sessionStorage.setItem(DL_KEY, '1'); } catch (e) { /* 覚えられなくても、今は手順を出す */ }
+          downloaded = true;
+          $('copied').hidden = !copied;
+          $('auto').hidden = !copied;
+          $('more').hidden = true;
+          showAfter();
+          $('dl').submit();
+        });
+    };
+    var copyThenDownload = function () { copyInvite().then(download); };
+    $('again').addEventListener('click', copyThenDownload);
+    $('dl-more').addEventListener('click', copyThenDownload);
+    if (downloaded) showAfter();
+
+    // アプリが入っているかの見分け: アプリを開こうとすると、入っていればブラウザが「開きますか？」のダイアログを出すか、アプリが前に出るので、
+    // このページから注目が外れる。入っていなければ、何も起きず、注目はこのページに残る（Chrome・Edge で確認。2026-11-15）。
+    // アプリを開こうとした後は、Chrome がクリップボードへの書き込みを返さなくなるので、まだ「入っている」と分かっていない時は、
+    // 開こうとする前に招待をコピーしておく（入っていなかった時に、そのままダウンロードへ進めるように）
+    var left = false;
+    addEventListener('blur', function () { left = true; });
+    var installed = false; // ページを開いた時・押した時に、注目が外れた（＝入っている）と分かったか
+    var tryOpen = function (copied) {
+      left = false;
+      opening.hidden = false;
+      location.href = appLink;
+      setTimeout(function () {
+        opening.hidden = true;
+        if (left || !document.hasFocus()) {
+          // 入っている（か、ほかのウィンドウへ移った）: 開かない時の手立てを出す。入っていなかった時のダウンロードも、その中に置く
+          installed = true;
+          $('more').hidden = false;
+          $('dl-more').hidden = !token || downloaded;
+          return;
+        }
+        if (downloaded) { $('more').hidden = false; return; }
+        if (token) download(copied); else $('none').hidden = false;
+      }, 1500);
+    };
+    open.addEventListener('click', function (e) {
+      e.preventDefault();
+      // コピーは、ダウンロードへ進むかもしれない時だけ（ダウンロードできない招待では、クリップボードを書き換えない）
+      if (installed || downloaded || !token) { tryOpen(false); return; }
+      copyInvite().then(tryOpen);
+    });
+    // ページを開いた時に、一度アプリを開いてみる（入っていなくても、ここでは何もしない。ダウンロードは、押した時だけ）
     location.href = appLink;
-    if (after.hidden) setTimeout(showHelp, 1500);
+    setTimeout(function () {
+      opening.hidden = true;
+      if (left) installed = true;
+    }, 1500);
+
+    $('more-btn').addEventListener('click', function (e) {
+      var b = e.currentTarget, d = $('drawer'), on = !d.classList.contains('shown');
+      d.classList.toggle('shown', on);
+      b.setAttribute('aria-expanded', on ? 'true' : 'false');
+    });
     $('copy').addEventListener('click', function (e) {
       var b = e.currentTarget.querySelector('span');
       // 招待リンクごとコピーする（アプリの「参加」に貼れる。トークンがある時は、トークンも預かる）
-      navigator.clipboard.writeText(location.href).then(function () { b.textContent = 'コピー済み'; }, function () { b.textContent = 'コピーできませんでした'; });
+      copyInvite().then(function (ok) { b.textContent = ok ? 'コピー済み' : 'コピーできませんでした'; });
     });
   }
 </script>
