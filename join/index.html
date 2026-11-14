@@ -1,8 +1,9 @@
 <!doctype html>
 <!--
   招待リンクの案内ページ。URLの # の後ろ（サーバーへ送られない部分）にある招待を、アプリへ渡すだけ。
-  どこにもデータを送らず、何も保存しない。
+  どこにもデータを送らず、何も保存しない（ダウンロードを押した時だけ、配布元へ GM の招待トークンを送る。招待の中身は送らない）。
   アプリ用のリンクの名前（下の SCHEME）は、アプリの設定と同じにする（変える時は README を見る）。
+  色はアプリの既定の色（アプリのリポジトリの app/src/lib/styles/app.css）に合わせる。
 -->
 <html lang="ja">
 <head>
@@ -13,108 +14,187 @@
 <title>テーブルトークテーブルに参加</title>
 <style>
   :root {
-    --app: #f6f5f2; --surface: #ffffff; --surface2: #efede8; --line: #dad6ce;
-    --ink: #1c1b19; --ink2: #5b5750; --ink3: #6f6a62; --accent: #9c5f17; --accent-ink: #ffffff; --danger: #c23f36;
+    --app: #f4f5f7; --surface: #ffffff; --surface2: #eceef1; --hover: #e2e5ea; --line: #d7dae0;
+    --ink: #16181c; --ink2: #535961; --ink3: #6b717b;
+    --accent: #2a66d4; --accent-soft: #e1ebfb; --accent-ink: #ffffff; --ok: #2c8653; --danger: #c23f36;
     --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.08);
     color-scheme: light dark;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --app: #131417; --surface: #1a1b1f; --surface2: #212328; --line: #2a2c31;
-      --ink: #eceae5; --ink2: #a7a39b; --ink3: #928e86; --accent: #d99a4e; --accent-ink: #1a1107; --danger: #ec6a5f;
+      --app: #111317; --surface: #181a1f; --surface2: #1f2228; --hover: #282c34; --line: #282b32;
+      --ink: #e8eaee; --ink2: #a2a7b0; --ink3: #7d838d;
+      --accent: #6aa5ff; --accent-soft: #1c2c47; --accent-ink: #0a1424; --ok: #5fc58c; --danger: #ec6a5f;
       --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
     }
   }
-  :root[data-theme="dark"] {
-    --app: #131417; --surface: #1a1b1f; --surface2: #212328; --line: #2a2c31;
-    --ink: #eceae5; --ink2: #a7a39b; --ink3: #928e86; --accent: #d99a4e; --accent-ink: #1a1107; --danger: #ec6a5f;
-    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
-  }
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--app); color: var(--ink);
-    font: 15px/1.7 "IBM Plex Sans JP", "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", system-ui, sans-serif; }
-  main { width: min(480px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-  .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; color: var(--ink2); }
-  .logo span { width: 28px; height: 28px; border-radius: 7px; background: var(--ink); color: var(--app); display: grid; place-items: center; font-family: "Shippori Mincho", "Yu Mincho", serif; font-weight: 700; }
-  h1 { margin: 0; font-size: 21px; font-weight: 600; line-height: 1.4; }
-  p { margin: 0; color: var(--ink2); }
-  .open { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 16px; text-decoration: none; }
-  .open:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .help { border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .help[hidden], .open[hidden], li[hidden] { display: none; }
-  form { margin: 0 0 6px; }
-  .dl { min-height: 40px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 600; cursor: pointer; }
-  h2 { margin: 0; font-size: 15px; font-weight: 600; }
-  ol { margin: 0; padding-left: 1.4em; color: var(--ink2); display: flex; flex-direction: column; gap: 6px; }
-  ol a { color: var(--accent); }
-  .code { display: flex; gap: 8px; align-items: stretch; }
-  .code code { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 6px; background: var(--surface2); font: 600 14px/1.5 ui-monospace, "Cascadia Code", Consolas, monospace; overflow-wrap: anywhere; user-select: all; }
-  .code button { flex: none; min-width: 72px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
-  .code button:hover { background: var(--surface2); }
-  .note { font-size: 13px; color: var(--ink3); }
-  .err { color: var(--danger); }
+    font: 15px/1.6 "IBM Plex Sans JP", "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", system-ui, sans-serif; }
+  main { width: min(440px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+  [hidden] { display: none !important; }
+  svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .logo { align-self: center; height: 30px; }
+  .logo.dark { display: none; }
+  @media (prefers-color-scheme: dark) { .logo.light { display: none; } .logo.dark { display: block; } }
+  h1 { margin: 0; font-size: 19px; font-weight: 600; line-height: 1.4; text-align: center; }
+  .err { margin: 0; color: var(--danger); text-align: center; }
+  /* 参加のボタン: 丸いアイコンだけ（名前は、ホバーした時と読み上げで出す） */
+  .open { align-self: center; width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); text-decoration: none; transition: transform .15s; }
+  .open svg { width: 32px; height: 32px; stroke-width: 2.2; }
+  .open:hover { transform: scale(1.06); }
+  .open:active { transform: scale(.96); }
+  /* インストールの後に押す所: ゆっくり光らせて、次はここだと見せる */
+  .open.next { animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 8px transparent; } }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* アプリを開いている間 */
+  .status { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: -8px; font-size: 13px; color: var(--ink3); }
+  .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade { animation: fade .25s ease-out; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } }
+  .sec { border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .ic { width: 36px; height: 36px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; flex: none; }
+  .grow { flex: 1; min-width: 0; }
+  .card { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: background .15s, border-color .15s; }
+  .card:hover { background: var(--hover); border-color: var(--accent); }
+  .grow b { display: block; font-weight: 600; }
+  .grow small { display: block; font-size: 13px; color: var(--ink3); }
+  form { margin: 0; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: var(--hover); }
+  .btn svg { width: 16px; height: 16px; }
+  /* ダウンロードの後: 3つの段（済んだ段は緑のチェック、今の段は青） */
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .steps li { display: flex; gap: 12px; align-items: flex-start; color: var(--ink3); }
+  .steps .n { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: 13px; font-weight: 700; flex: none; }
+  .steps .n svg { width: 14px; height: 14px; stroke-width: 3; }
+  .steps .t { padding-top: 2px; }
+  .steps .t small { display: block; font-size: 13px; }
+  .steps .done { color: var(--ink2); }
+  .steps .done .n { border-color: var(--ok); background: var(--ok); color: #fff; animation: pop .3s ease-out; }
+  .steps .now { color: var(--ink); font-weight: 600; }
+  .steps .now .n { border-color: var(--accent); color: var(--accent); }
+  .steps .now small { font-weight: 400; color: var(--ink3); }
+  @keyframes pop { from { transform: scale(.6); } }
+  .link { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 2px 6px; margin-left: -6px; border: 0; border-radius: 6px; background: none; color: var(--ink3); font: inherit; font-size: 13px; cursor: pointer; }
+  .link svg { width: 14px; height: 14px; }
+  #fallback { flex-wrap: wrap; gap: 4px; }
+  #fallback .link { margin: 0; color: var(--accent); font-weight: 600; }
+  .link:hover { background: var(--hover); color: var(--ink); }
 </style>
 </head>
 <body>
+<!-- 絵（Lucide のアイコン。ISC ライセンス） -->
+<svg hidden xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-ask" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-go" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></symbol>
+</svg>
 <main>
-  <div class="logo"><span>T</span>テーブルトークテーブル</div>
-  <div id="ok">
-    <h1>部屋に招待されています</h1>
-    <p>アプリが開いて、ホームの「参加」に招待が入ります。表示名を確かめて「参加」を押してください。</p>
-  </div>
-  <a class="open" id="open" href="#">アプリで開く</a>
-  <section class="help" id="help" hidden>
-    <h2>アプリが開かない時</h2>
-    <ol>
-      <li id="get-beta" hidden>
-        <form id="dl" method="post"><input type="hidden" name="cred" id="cred"><button type="submit" class="dl">アプリ（無料・Windows）をダウンロード</button></form>
-        入れた後に、もう一度このページの「アプリで開く」を押してください。ダウンロードしたファイルを開いて「Windows によって PC が保護されました」と出たら、「詳細情報」→「実行」を押します。
-      </li>
-      <li id="get-none">アプリはベータ版で、まだ一般には配っていません。招待してくれた GM に、入れ方を聞いてください。</li>
-      <li>アプリを入れてある時は、下の招待をコピーして、アプリのホームの「参加」に貼ってください。</li>
+  <!-- ロゴ（アプリのリポジトリの docs/design/logo/logo-horizontal*.svg のコピー） -->
+  <img class="logo light" src="logo.svg" alt="テーブルトークテーブル"><img class="logo dark" src="logo-dark.svg" alt="テーブルトークテーブル">
+  <h1 id="title">卓に招待されています</h1>
+  <a class="open" id="open" href="#" aria-label="この卓に参加する" title="この卓に参加する"><svg><use href="#i-go"/></svg></a>
+  <div class="status" id="status"><span class="spin"></span>アプリを開いています</div>
+  <!-- 丸いボタンを押してもアプリが開かなかった時だけ、ボタンのすぐ下に出す（アプリは入っているのに、ブラウザが開かない時） -->
+  <div class="status fade" id="fallback" hidden>アプリが開かない時は<button type="button" class="link" id="copy"><svg><use href="#i-copy"/></svg><span>招待リンクをコピー</span></button>→ アプリの「参加」に貼る</div>
+
+  <!-- ダウンロードを押した後 -->
+  <section class="sec fade" id="after" hidden>
+    <ol class="steps">
+      <li class="done"><span class="n"><svg><use href="#i-check"/></svg></span><span class="t">ダウンロード</span></li>
+      <li class="now"><span class="n">2</span><span class="t">インストール<small>「PC が保護されました」→「詳細情報」→「実行」</small></span></li>
+      <!-- 3つ目は、上の丸いボタンと同じ絵で見せる -->
+      <li><span class="n"><svg><use href="#i-go"/></svg></span><span class="t">参加</span></li>
     </ol>
-    <div class="code"><code id="code"></code><button type="button" id="copy">コピー</button></div>
+    <button type="button" class="link" id="again">もう一度ダウンロード</button>
   </section>
-  <p class="note">このページは招待をアプリへ渡すだけで、何も保存しません。ダウンロードを押した時だけ、配布元へ GM の招待の印を送ります（招待の中身は送りません）。</p>
+
+  <!-- アプリが開かない時 -->
+  <section class="sec fade" id="help" hidden>
+    <!-- 新しいタブで送る: 配布元が断った時も、このページ（招待）は残る。行全体が1つのボタン -->
+    <form id="dl" method="post" target="_blank" hidden><input type="hidden" name="cred" id="cred">
+      <button type="submit" class="row card"><span class="ic"><svg><use href="#i-dl"/></svg></span><span class="grow"><b>アプリをダウンロード</b><small>無料・Windows</small></span></button>
+    </form>
+    <div class="row" id="get-none">
+      <span class="ic"><svg><use href="#i-ask"/></svg></span>
+      <span class="grow"><b>アプリはベータ版です</b><small>インストール方法は、招待してくれた GM に聞いてください</small></span>
+    </div>
+  </section>
+
 </main>
 <script>
   // アプリ用のリンクの名前（仮）。app/src/lib/net/code.ts の LINK_SCHEME と同じにする
   var SCHEME = 'tablestudio';
-  // ベータ版の配布元（アプリのリポジトリの beta/）。鍵を持つ GM の招待には、後ろに「&b=招待の印」が付く
+  // ベータ版の配布元（アプリのリポジトリの beta/）。鍵を持つ GM の招待には、後ろに「&b=招待トークン」が付く
   var BETA = 'https://beta.kawaken-official.com';
+  var $ = function (id) { return document.getElementById(id); };
   var invite = '', token = '';
   try {
-    // 招待は encodeURIComponent してあるので、そのままの「&」は、後ろに付けた印の区切り
+    // 招待は encodeURIComponent してあるので、そのままの「&」は、後ろに付けたトークンの区切り
     var parts = location.hash.slice(1).split('&');
     invite = decodeURIComponent(parts[0]);
     for (var i = 1; i < parts.length; i++) if (parts[i].indexOf('b=') === 0) token = decodeURIComponent(parts[i].slice(2));
   } catch (e) { invite = ''; }
   if (!/^tb1\.[a-z0-9-]{1,32}\.[A-Za-z0-9_-]{43}$/.test(token)) token = '';
-  var open = document.getElementById('open');
-  var help = document.getElementById('help');
+  var open = $('open'), help = $('help'), after = $('after'), opening = $('status');
   if (!invite) {
-    document.getElementById('ok').innerHTML = '<h1>招待リンクが正しくありません</h1><p class="err">GMから届いたリンクを、もう一度そのまま開いてください。</p>';
+    $('title').textContent = '招待リンクが正しくありません';
+    $('title').insertAdjacentHTML('afterend', '<p class="err">GM から届いたリンクを、もう一度そのまま開いてください</p>');
     open.hidden = true;
+    opening.hidden = true;
   } else {
     var appLink = SCHEME + '://join/?i=' + encodeURIComponent(invite) + (token ? '&b=' + encodeURIComponent(token) : '');
     open.href = appLink;
-    document.getElementById('code').textContent = invite;
     if (token) {
-      document.getElementById('dl').action = BETA + '/v1/download';
-      document.getElementById('cred').value = token;
-      document.getElementById('get-beta').hidden = false;
-      document.getElementById('get-none').hidden = true;
+      $('dl').action = BETA + '/v1/download';
+      $('cred').value = token;
+      $('dl').hidden = false;
+      $('get-none').hidden = true;
     }
-    // アプリが開けば、このページは裏へ回る。しばらくしても前にあれば案内を出す
-    var shown = false;
-    var showHelp = function () { if (!shown && !document.hidden) { shown = true; help.hidden = false; } };
-    open.addEventListener('click', function () { setTimeout(showHelp, 1500); });
+    // アプリが開けば、このページは裏へ回る。しばらくしても前にあれば「開かない時」を出す
+    var waiting = function () { opening.hidden = false; };
+    var showHelp = function () { opening.hidden = true; if (!document.hidden && after.hidden) help.hidden = false; };
+    open.addEventListener('click', function () {
+      waiting();
+      // 押しても開かない時は、ボタンの下にコピーを出す（ダウンロードの前なら、ダウンロードも出す）
+      setTimeout(function () {
+        opening.hidden = true;
+        if (document.hidden) return;
+        $('fallback').hidden = false;
+        if (after.hidden) help.hidden = false;
+      }, 1500);
+    });
+    // ダウンロードを押した後は、インストールの手順を出す（このタブの間だけ覚える。招待の中身は覚えない。
+    // 招待は住所の # の後ろにあるので、読み直し・戻るでも残る）
+    var DL_KEY = 'ttt-join:downloaded';
+    var showAfter = function () {
+      after.hidden = false;
+      help.hidden = true;
+      opening.hidden = true;
+      open.classList.add('next');
+    };
+    if (token) {
+      $('dl').addEventListener('submit', function () {
+        try { sessionStorage.setItem(DL_KEY, '1'); } catch (e) { /* 覚えられなくても、今は手順を出す */ }
+        showAfter();
+      });
+      $('again').addEventListener('click', function () { $('dl').requestSubmit(); });
+      var done = false;
+      try { done = sessionStorage.getItem(DL_KEY) === '1'; } catch (e) { done = false; }
+      if (done) showAfter();
+    }
     location.href = appLink;
-    setTimeout(showHelp, 1500);
-    document.getElementById('copy').addEventListener('click', function (e) {
-      var b = e.currentTarget;
-      // 印がある時は、招待リンクごとコピーする（アプリの「参加」に貼ると、印も預かる）
-      navigator.clipboard.writeText(token ? location.href : invite).then(function () { b.textContent = 'コピー済み'; }, function () { b.textContent = '選んでコピー'; });
+    if (after.hidden) setTimeout(showHelp, 1500);
+    $('copy').addEventListener('click', function (e) {
+      var b = e.currentTarget.querySelector('span');
+      // 招待リンクごとコピーする（アプリの「参加」に貼れる。トークンがある時は、トークンも預かる）
+      navigator.clipboard.writeText(location.href).then(function () { b.textContent = 'コピー済み'; }, function () { b.textContent = 'コピーできませんでした'; });
     });
   }
 </script>
