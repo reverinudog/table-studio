@@ -106,7 +106,7 @@
   <img class="logo light" src="logo.svg" alt="テーブルトークテーブル"><img class="logo dark" src="logo-dark.svg" alt="テーブルトークテーブル">
   <h1 id="title">ルームに招待されています</h1>
   <a class="open" id="open" href="#" aria-label="このルームに参加する" title="このルームに参加する"><svg><use href="#i-go"/></svg></a>
-  <div class="status" id="status"><span class="spin"></span>アプリを開いています</div>
+  <div class="status" id="status"><span class="spin"></span><span id="status-text">アプリを開いています</span></div>
 
   <!-- 丸いボタンを押してもアプリが開かなかった時（アプリは入っているのに、ブラウザが開かない時） -->
   <div class="more fade" id="more" hidden>
@@ -124,7 +124,7 @@
   <section class="sec fade" id="after" hidden>
     <ol class="steps">
       <li class="done"><span class="n"><svg><use href="#i-check"/></svg></span><span class="t">ダウンロード<small id="copied" hidden>招待リンクもコピーしました</small></span></li>
-      <li class="now"><span class="n">2</span><span class="t">インストール<small>「PC が保護されました」と出たら「詳細情報」→「実行」</small></span></li>
+      <li class="now"><span class="n">2</span><span class="t">ダウンロードした「TableTalkTable-…-setup.exe」を開く<small>ブラウザのダウンロードの一覧か、「ダウンロード」フォルダにあります</small><small>「PC が保護されました」と出たら「詳細情報」→「実行」</small></span></li>
       <li><span class="n"><svg><use href="#i-go"/></svg></span><span class="t">参加<small id="auto" hidden>アプリを開いて、同じアイコンのボタンを押すだけです</small></span></li>
     </ol>
     <button type="button" class="link again" id="again">もう一度ダウンロード</button>
@@ -187,24 +187,38 @@
     // ダウンロード: 先に配布元へ「取れるか」だけを聞き、取れる時だけ送る（断られた時に、このページを配布元の鍵の頁に置き換えない）。
     // copied … 招待リンクをコピーできたか（手順に添える）
     var dlErr = function (text) { var p = $('dlerr'); p.textContent = text; p.hidden = false; };
+    var say = function (text) { $('status-text').textContent = text; opening.hidden = false; };
+    // 配布元に届かなかった時（回線の一瞬の切れ・名前の引き始めの遅れ）は、知らせを出す前に、間を空けて2回まで聞き直す
+    // （1回目だけ届かず、押し直すと通る事があった。2026-11-24）。断られた（403）・準備中（503）は、聞き直しても変わらないので、すぐ知らせる
+    var TRIES = 3;
+    var asking = false;
     var download = function (copied) {
+      if (asking) return;
+      asking = true;
       $('dlerr').hidden = true;
-      var stop = new AbortController();
-      var timer = setTimeout(function () { stop.abort(); }, 15000);
-      fetch(BETA + '/v1/download-check', { method: 'POST', body: new URLSearchParams({ cred: token }), signal: stop.signal })
-        .then(function (r) { return r.status; }, function () { return 0; })
-        .then(function (status) {
-          clearTimeout(timer);
-          if (status === 403) { dlErr('ダウンロードできませんでした。招待してくれた GM に聞いてください'); return; }
-          if (status !== 200) { dlErr(status === 503 ? 'ダウンロードの準備中です。少し待ってから、もう一度押してください' : '配布元につながりませんでした。少し待ってから、もう一度押してください'); return; }
-          try { sessionStorage.setItem(DL_KEY, '1'); } catch (e) { /* 覚えられなくても、今は手順を出す */ }
-          downloaded = true;
-          $('copied').hidden = !copied;
-          $('auto').hidden = !copied;
-          $('more').hidden = true;
-          showAfter();
-          $('dl').submit();
-        });
+      say('ダウンロードの準備をしています');
+      var ask = function (n) {
+        var stop = new AbortController();
+        var timer = setTimeout(function () { stop.abort(); }, 10000);
+        fetch(BETA + '/v1/download-check', { method: 'POST', body: new URLSearchParams({ cred: token }), signal: stop.signal })
+          .then(function (r) { return r.status; }, function () { return 0; })
+          .then(function (status) {
+            clearTimeout(timer);
+            if ((status === 0 || (status >= 500 && status !== 503)) && n < TRIES) { setTimeout(function () { ask(n + 1); }, 1500 * n); return; }
+            asking = false;
+            opening.hidden = true;
+            if (status === 403) { dlErr('ダウンロードできませんでした。招待してくれた GM に聞いてください'); return; }
+            if (status !== 200) { dlErr(status === 503 ? 'ダウンロードの準備中です。少し待ってから、もう一度押してください' : '配布元につながりませんでした。少し待ってから、もう一度押してください'); return; }
+            try { sessionStorage.setItem(DL_KEY, '1'); } catch (e) { /* 覚えられなくても、今は手順を出す */ }
+            downloaded = true;
+            $('copied').hidden = !copied;
+            $('auto').hidden = !copied;
+            $('more').hidden = true;
+            showAfter();
+            $('dl').submit();
+          });
+      };
+      ask(1);
     };
     var copyThenDownload = function () { copyInvite().then(download); };
     $('again').addEventListener('click', copyThenDownload);
@@ -220,7 +234,7 @@
     var installed = false; // ページを開いた時・押した時に、注目が外れた（＝入っている）と分かったか
     var tryOpen = function (copied) {
       left = false;
-      opening.hidden = false;
+      say('アプリを開いています');
       location.href = appLink;
       setTimeout(function () {
         opening.hidden = true;
